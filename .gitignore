@@ -22,3 +22,31 @@
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
 replay_pid*
+
+# ── Maven build output ────────────────────────────────────────────────────────
+target/
+!.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+# ── IDE files ─────────────────────────────────────────────────────────────────
+.idea/
+*.iws
+*.iml
+*.ipr
+.vscode/
+*.swp
+
+# ── Environment variables — NEVER commit these ────────────────────────────────
+# .env.example IS committed (it's a template with no real values)
+# .env is NOT committed (contains real secrets)
+.env
+*.env
+!.env.example
+
+# Dev profiles contain hardcoded credentials — never commit
+**/application-dev.yml
+
+# ── OS files ──────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
