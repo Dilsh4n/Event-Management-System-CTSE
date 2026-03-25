@@ -1,0 +1,155 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Docker Compose — EC2 Production Deployment
+# ─────────────────────────────────────────────────────────────────────────────
+#
+# This file is used on the EC2 instance. It pulls pre-built images from ECR
+# instead of building locally (EC2 t2.micro doesn't have enough RAM to build).
+#
+# REQUIRED:
+#   - .env file in the same directory with: DB_URL, DB_USERNAME, DB_PASSWORD,
+#     JWT_SECRET, MAIL_USERNAME, MAIL_PASSWORD, AWS_ACCOUNT_ID, AWS_REGION
+#
+# USAGE:
+#   docker compose -f docker-compose.prod.yml pull
+#   docker compose -f docker-compose.prod.yml up -d
+#
+# ─────────────────────────────────────────────────────────────────────────────
+
+services:
+
+  user-service:
+    image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/event-mgmt/user-service:latest
+    container_name: user-service
+    ports:
+      - "8001:8001"
+    environment:
+      DB_URL: ${DB_URL}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      NOTIFICATION_SERVICE_URL: http://notification-service:8004
+    deploy:
+      resources:
+        limits:
+          memory: 300M
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8001/actuator/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
+    restart: unless-stopped
+    networks:
+      - conference-network
+
+  event-service:
+    image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/event-mgmt/event-service:latest
+    container_name: event-service
+    ports:
+      - "8002:8002"
+    environment:
+      DB_URL: ${DB_URL}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      USER_SERVICE_URL: http://user-service:8001
+      NOTIFICATION_SERVICE_URL: http://notification-service:8004
+    deploy:
+      resources:
+        limits:
+          memory: 300M
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8002/actuator/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
+    restart: unless-stopped
+    networks:
+      - conference-network
+
+  registration-service:
+    image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/event-mgmt/registration-service:latest
+    container_name: registration-service
+    ports:
+      - "8003:8003"
+    environment:
+      DB_URL: ${DB_URL}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      USER_SERVICE_URL: http://user-service:8001
+      EVENT_SERVICE_URL: http://event-service:8002
+      NOTIFICATION_SERVICE_URL: http://notification-service:8004
+    deploy:
+      resources:
+        limits:
+          memory: 300M
+    depends_on:
+      user-service:
+        condition: service_healthy
+      event-service:
+        condition: service_healthy
+      notification-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8003/actuator/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
+    restart: unless-stopped
+    networks:
+      - conference-network
+
+  notification-service:
+    image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/event-mgmt/notification-service:latest
+    container_name: notification-service
+    ports:
+      - "8004:8004"
+    environment:
+      DB_URL: ${DB_URL}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      MAIL_USERNAME: ${MAIL_USERNAME}
+      MAIL_PASSWORD: ${MAIL_PASSWORD}
+      USER_SERVICE_URL: http://user-service:8001
+      EVENT_SERVICE_URL: http://event-service:8002
+      MANAGEMENT_HEALTH_MAIL_ENABLED: "false"
+    deploy:
+      resources:
+        limits:
+          memory: 300M
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8004/actuator/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
+    restart: unless-stopped
+    networks:
+      - conference-network
+
+  frontend:
+    image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/event-mgmt/frontend:latest
+    container_name: frontend
+    ports:
+      - "80:80"
+    deploy:
+      resources:
+        limits:
+          memory: 64M
+    depends_on:
+      user-service:
+        condition: service_healthy
+      event-service:
+        condition: service_healthy
+      registration-service:
+        condition: service_healthy
+      notification-service:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - conference-network
+
+networks:
+  conference-network:
+    driver: bridge

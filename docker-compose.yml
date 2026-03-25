@@ -133,6 +133,28 @@ services:
     networks:
       - conference-network
 
+  # ── Frontend (port 3000) ────────────────────────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    image: frontend:local
+    container_name: frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      user-service:
+        condition: service_healthy
+      event-service:
+        condition: service_healthy
+      registration-service:
+        condition: service_healthy
+      notification-service:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - conference-network
+
 # ── Shared Network ─────────────────────────────────────────────────────────────
 # All services share this network so they can resolve each other by name.
 networks:
