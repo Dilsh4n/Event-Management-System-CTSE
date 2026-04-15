@@ -1,17 +1,15 @@
 # ─────────────────────────────────────────────────────────────────────────────
-# Docker Compose — EC2 Production Deployment
+# Docker Compose — Backend EC2 (Server B)
 # ─────────────────────────────────────────────────────────────────────────────
 #
-# This file is used on the EC2 instance. It pulls pre-built images from ECR
-# instead of building locally (EC2 t2.micro doesn't have enough RAM to build).
-#
 # REQUIRED:
-#   - .env file in the same directory with: DB_URL, DB_USERNAME, DB_PASSWORD,
-#     JWT_SECRET, MAIL_USERNAME, MAIL_PASSWORD, AWS_ACCOUNT_ID, AWS_REGION
+#   - .env file in the same directory with:
+#     AWS_ACCOUNT_ID, AWS_REGION, DB_URL, DB_USERNAME, DB_PASSWORD,
+#     JWT_SECRET, MAIL_USERNAME, MAIL_PASSWORD
 #
 # USAGE:
-#   docker compose -f docker-compose.prod.yml pull
-#   docker compose -f docker-compose.prod.yml up -d
+#   docker compose -f docker-compose.backend.prod.yml pull
+#   docker compose -f docker-compose.backend.prod.yml up -d
 #
 # ─────────────────────────────────────────────────────────────────────────────
 
@@ -83,13 +81,6 @@ services:
       resources:
         limits:
           memory: 300M
-    depends_on:
-      user-service:
-        condition: service_healthy
-      event-service:
-        condition: service_healthy
-      notification-service:
-        condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:8003/actuator/health || exit 1"]
       interval: 30s
@@ -124,30 +115,6 @@ services:
       timeout: 10s
       retries: 5
       start_period: 120s
-    restart: unless-stopped
-    networks:
-      - conference-network
-
-  frontend:
-    image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/event-mgmt/frontend:latest
-    container_name: frontend
-    ports:
-      - "80:80"
-    environment:
-      BACKEND_IP: ${BACKEND_IP}
-    deploy:
-      resources:
-        limits:
-          memory: 64M
-    depends_on:
-      user-service:
-        condition: service_healthy
-      event-service:
-        condition: service_healthy
-      registration-service:
-        condition: service_healthy
-      notification-service:
-        condition: service_healthy
     restart: unless-stopped
     networks:
       - conference-network
