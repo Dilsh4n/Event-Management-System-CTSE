@@ -1,3 +1,60 @@
+# name: Deploy Full Stack to EC2 Production
+
+# on:
+#   push:
+#     branches:
+#       - production
+
+# jobs:
+#   # ---------------------------------------------------
+#   # JOB 1: THE BACKEND
+#   # ---------------------------------------------------
+#   deploy-backend:
+#     name: Deploy Backend to EC2
+#     runs-on: ubuntu-latest
+
+#     steps:
+#       - name: Checkout Code
+#         uses: actions/checkout@v4
+
+#       - name: Execute Backend Deployment via SSH
+#         uses: appleboy/ssh-action@v1.0.3
+#         with:
+#           host: ${{ secrets.BACKEND_EC2_HOST }}
+#           username: ${{ secrets.EC2_USERNAME }}
+#           key: ${{ secrets.EC2_SSH_KEY }}
+#           script: |
+#             cd /home/ec2-user/
+#             docker compose -f docker-compose.backend.prod.yml pull
+#             docker compose -f docker-compose.backend.prod.yml down
+#             docker compose -f docker-compose.backend.prod.yml up -d
+#             docker image prune -f
+
+#   # ---------------------------------------------------
+#   # JOB 2: THE FRONTEND
+#   # ---------------------------------------------------
+#   deploy-frontend:
+#     name: Deploy Frontend to EC2
+#     runs-on: ubuntu-latest
+
+#     steps:
+#       - name: Checkout Code
+#         uses: actions/checkout@v4
+
+#       - name: Execute Frontend Deployment via SSH
+#         uses: appleboy/ssh-action@v1.0.3
+#         with:
+#           host: ${{ secrets.FRONTEND_EC2_HOST }}
+#           username: ${{ secrets.EC2_USERNAME }}
+#           key: ${{ secrets.EC2_SSH_KEY }}
+#           script: |
+#             cd /home/ec2-user/
+#             docker compose -f docker-compose.frontend.prod.yml pull
+#             docker compose -f docker-compose.frontend.prod.yml down
+#             docker compose -f docker-compose.frontend.prod.yml up -d
+#             docker image prune -f
+
+
 name: Deploy Full Stack to EC2 Production
 
 on:
@@ -7,15 +64,47 @@ on:
 
 jobs:
   # ---------------------------------------------------
-  # JOB 1: THE BACKEND
+  # JOB 1: THE BACKEND (All 4 Microservices)
   # ---------------------------------------------------
   deploy-backend:
-    name: Deploy Backend to EC2
+    name: Build & Deploy Backend
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and Push All Backend Services
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: latest
+        run: |
+          # 1. User Service
+          docker build -t $ECR_REGISTRY/event-mgmt/user-service:$IMAGE_TAG ./user-service
+          docker push $ECR_REGISTRY/event-mgmt/user-service:$IMAGE_TAG
+          
+          # 2. Event Service
+          docker build -t $ECR_REGISTRY/event-mgmt/event-service:$IMAGE_TAG ./event-service
+          docker push $ECR_REGISTRY/event-mgmt/event-service:$IMAGE_TAG
+          
+          # 3. Registration Service
+          docker build -t $ECR_REGISTRY/event-mgmt/registration-service:$IMAGE_TAG ./registration-service
+          docker push $ECR_REGISTRY/event-mgmt/registration-service:$IMAGE_TAG
+          
+          # 4. Notification Service
+          docker build -t $ECR_REGISTRY/event-mgmt/notification-service:$IMAGE_TAG ./notification-service
+          docker push $ECR_REGISTRY/event-mgmt/notification-service:$IMAGE_TAG
 
       - name: Execute Backend Deployment via SSH
         uses: appleboy/ssh-action@v1.0.3
@@ -34,12 +123,31 @@ jobs:
   # JOB 2: THE FRONTEND
   # ---------------------------------------------------
   deploy-frontend:
-    name: Deploy Frontend to EC2
+    name: Build & Deploy Frontend
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Login to Amazon ECR
+        id: login-ecr-front
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and Push Frontend
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr-front.outputs.registry }}
+          IMAGE_TAG: latest
+        run: |
+          docker build -t $ECR_REGISTRY/event-mgmt/frontend:$IMAGE_TAG ./frontend
+          docker push $ECR_REGISTRY/event-mgmt/frontend:$IMAGE_TAG
 
       - name: Execute Frontend Deployment via SSH
         uses: appleboy/ssh-action@v1.0.3
