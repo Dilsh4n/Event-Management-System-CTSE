@@ -4,10 +4,10 @@ import { login } from '../api';
 import { useAuth } from '../context/AuthContext';
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('');
+  const [email, setEmail]       = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [error, setError]       = useState('');
+  const [loading, setLoading]   = useState(false);
   const { loginUser } = useAuth();
   const navigate = useNavigate();
 
@@ -27,29 +27,86 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="auth-wrapper">
-      <div className="card auth-card">
-        <h2 className="page-title" style={{ textAlign: 'center' }}>WWelcome Back</h2>
-        <p style={{ textAlign: 'center', color: 'var(--text-light)', marginBottom: 24 }}>
-          Sign in to your account
-        </p>
-        {error && <div className="alert alert-error">{error}</div>}
-        <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label>Email</label>
-            <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@university.edu" required />
+    <div className="auth-page">
+      {/* Hero side */}
+      <div className="auth-hero">
+        <div className="auth-hero-icon">🎓</div>
+        <h2>Welcome Back!</h2>
+        <p>Sign in to access your university event dashboard and manage your registrations.</p>
+
+        <div className="auth-features">
+          <div className="auth-feature-item">
+            <span className="auth-feature-dot">📅</span>
+            Browse upcoming events &amp; workshops
           </div>
-          <div className="form-group">
-            <label>Password</label>
-            <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••" required />
+          <div className="auth-feature-item">
+            <span className="auth-feature-dot">✅</span>
+            Register in one click
           </div>
-          <button className="btn btn-primary" style={{ width: '100%', marginTop: 8 }} disabled={loading}>
-            {loading ? 'Signing in...' : 'Sign In'}
-          </button>
-        </form>
-        <p style={{ textAlign: 'center', marginTop: 16, fontSize: 14, color: 'var(--text-light)' }}>
-          Don't have an account? <Link to="/register">Register here</Link>
-        </p>
+          <div className="auth-feature-item">
+            <span className="auth-feature-dot">🔔</span>
+            Get instant notifications
+          </div>
+        </div>
+      </div>
+
+      {/* Form side */}
+      <div className="auth-form-side">
+        <div className="auth-form-container">
+          <div className="auth-form-header">
+            <h1>Sign In</h1>
+            <p>Enter your credentials to access your account</p>
+          </div>
+
+          {error && (
+            <div className="alert alert-error">
+              <span>⚠️</span>
+              {error}
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit}>
+            <div className="form-group">
+              <label>Email address</label>
+              <input
+                type="email"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                placeholder="you@university.edu"
+                required
+                autoFocus
+              />
+            </div>
+            <div className="form-group">
+              <label>Password</label>
+              <input
+                type="password"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                placeholder="••••••••"
+                required
+              />
+            </div>
+
+            <button
+              className="btn btn-primary btn-lg w-full"
+              style={{ marginTop: 8 }}
+              disabled={loading}
+            >
+              {loading ? (
+                <>
+                  <span className="spinner" style={{ width: 16, height: 16, borderWidth: 2 }} />
+                  Signing in...
+                </>
+              ) : 'Sign In →'}
+            </button>
+          </form>
+
+          <div className="auth-divider" style={{ marginTop: 24 }}>
+            Don&apos;t have an account?{' '}
+            <Link to="/register">Create one for free</Link>
+          </div>
+        </div>
       </div>
     </div>
   );
