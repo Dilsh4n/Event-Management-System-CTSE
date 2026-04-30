@@ -29,7 +29,7 @@ export default function LoginPage() {
   return (
     <div className="auth-wrapper">
       <div className="card auth-card">
-        <h2 className="page-title" style={{ textAlign: 'center' }}>Welcome Back</h2>
+        <h2 className="page-title" style={{ textAlign: 'center' }}>WWelcome Back</h2>
         <p style={{ textAlign: 'center', color: 'var(--text-light)', marginBottom: 24 }}>
           Sign in to your account
         </p>
