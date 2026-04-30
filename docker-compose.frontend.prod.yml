@@ -1,0 +1,34 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Docker Compose — Frontend EC2 (Server A)
+# ─────────────────────────────────────────────────────────────────────────────
+#
+# REQUIRED:
+#   - .env file in the same directory with:
+#     AWS_ACCOUNT_ID, AWS_REGION, BACKEND_IP
+#
+# USAGE:
+#   docker compose -f docker-compose-frontend.yml pull
+#   docker compose -f docker-compose-frontend.yml up -d
+#
+# ─────────────────────────────────────────────────────────────────────────────
+
+services:
+
+  frontend:
+    image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/event-mgmt/frontend:latest
+    container_name: frontend
+    ports:
+      - "80:80"
+    environment:
+      BACKEND_IP: ${BACKEND_IP}
+    deploy:
+      resources:
+        limits:
+          memory: 64M
+    restart: unless-stopped
+    networks:
+      - conference-network
+
+networks:
+  conference-network:
+    driver: bridge
