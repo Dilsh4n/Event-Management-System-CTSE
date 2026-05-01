@@ -50,8 +50,8 @@ spring:
     # Connection Pool (HikariCP — Spring Boot's default, very performant)
     # These settings prevent connection exhaustion in production
     hikari:
-      maximum-pool-size: 5          # Keep it low for Supabase free tier limits
-      minimum-idle: 2
+      maximum-pool-size: 2          # Keep it low for Supabase free tier limits
+      minimum-idle: 1
       connection-timeout: 30000     # 30 seconds to acquire a connection
       idle-timeout: 600000          # Close idle connections after 10 minutes
 
@@ -99,7 +99,7 @@ app:
     expiration-ms: 86400000
 
   services:
-    notification-url: ${NOTIFICATION_SERVICE_URL:http://notification-service:8004}
+    notification-url: ${NOTIFICATION_SERVICE_URL:http://localhost:8004}
 
 # ── Logging ────────────────────────────────────────────────────────────────────
 logging:

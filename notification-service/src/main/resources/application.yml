@@ -11,8 +11,8 @@ spring:
     password: ${DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
     hikari:
-      maximum-pool-size: 5
-      minimum-idle: 2
+      maximum-pool-size: 2
+      minimum-idle: 1
 
   jpa:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
@@ -57,5 +57,5 @@ logging:
 # Defaults point to Docker Compose service names; override with env vars.
 app:
   services:
-    user-url: ${USER_SERVICE_URL:http://user-service:8001}
-    event-url: ${EVENT_SERVICE_URL:http://event-service:8002}
+    user-url: ${USER_SERVICE_URL:http://localhost:8001}
+    event-url: ${EVENT_SERVICE_URL:http://localhost:8002}
