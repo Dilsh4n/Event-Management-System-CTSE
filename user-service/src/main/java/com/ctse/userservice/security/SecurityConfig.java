@@ -90,9 +90,11 @@ public class SecurityConfig {
                 // PUBLIC — inter-service endpoints (no JWT from other services)
                 // GET /users/{id} — called by Registration Service and Notification Service
                 // GET /users      — called by Event Service to get all users for NEW_EVENT notifications
+                // POST /users     — called by Frontend for registration
                 // In production these are restricted at the network/VPC level.
                 .requestMatchers(HttpMethod.GET, "/users/{id}").permitAll()
                 .requestMatchers(HttpMethod.GET, "/users").permitAll()
+                .requestMatchers(HttpMethod.POST, "/users").permitAll()
 
                 // ADMIN-only
                 .requestMatchers("/admin/users").hasAuthority("ROLE_ADMIN")

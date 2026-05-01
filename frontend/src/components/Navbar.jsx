@@ -5,38 +5,44 @@ export default function Navbar() {
   const { user, isAdmin, logout } = useAuth();
   const navigate = useNavigate();
 
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-  };
+  const handleLogout = () => { logout(); navigate('/login'); };
+  const initial = user?.name?.[0]?.toUpperCase() || '?';
 
   return (
-    <div className="navbar">
-      <h1>🎓 UniEvents</h1>
+    <header className="navbar">
+      <NavLink to={user ? (isAdmin ? '/admin' : '/events') : '/login'} className="navbar-brand">
+        <div className="navbar-logo">🎓</div>
+        <span className="navbar-title">UniEvents</span>
+      </NavLink>
+
       <nav>
         {!user ? (
           <>
-            <NavLink to="/login">Login</NavLink>
-            <NavLink to="/register">Register</NavLink>
+            <NavLink to="/login"    className={({ isActive }) => isActive ? 'active' : ''}>Login</NavLink>
+            <NavLink to="/register" className={({ isActive }) => isActive ? 'active' : ''}>Register</NavLink>
           </>
         ) : isAdmin ? (
           <>
-            <NavLink to="/admin">Dashboard</NavLink>
-            <NavLink to="/admin/events">Manage Events</NavLink>
-            <NavLink to="/admin/users">Users</NavLink>
-            <span style={{ color: 'var(--text-light)', fontSize: 13 }}>{user.name}</span>
-            <button className="btn btn-outline btn-sm" onClick={handleLogout}>Logout</button>
+            <NavLink to="/admin"        end className={({ isActive }) => isActive ? 'active' : ''}>Dashboard</NavLink>
+            <NavLink to="/admin/events"     className={({ isActive }) => isActive ? 'active' : ''}>Events</NavLink>
+            <NavLink to="/admin/users"      className={({ isActive }) => isActive ? 'active' : ''}>Users</NavLink>
           </>
         ) : (
           <>
-            <NavLink to="/events">Events</NavLink>
-            <NavLink to="/my-registrations">My Registrations</NavLink>
-            <NavLink to="/notifications">Notifications</NavLink>
-            <span style={{ color: 'var(--text-light)', fontSize: 13 }}>{user.name}</span>
-            <button className="btn btn-outline btn-sm" onClick={handleLogout}>Logout</button>
+            <NavLink to="/events"           className={({ isActive }) => isActive ? 'active' : ''}>Browse Events</NavLink>
+            <NavLink to="/my-registrations" className={({ isActive }) => isActive ? 'active' : ''}>My Registrations</NavLink>
+            <NavLink to="/notifications"    className={({ isActive }) => isActive ? 'active' : ''}>Notifications</NavLink>
           </>
         )}
       </nav>
-    </div>
+
+      {user && (
+        <div className="navbar-user">
+          <div className="navbar-avatar">{initial}</div>
+          <span className="navbar-user-name">{user.name}</span>
+          <button className="btn btn-outline btn-sm" onClick={handleLogout}>Sign Out</button>
+        </div>
+      )}
+    </header>
   );
 }
